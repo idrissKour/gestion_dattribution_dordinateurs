@@ -1,7 +1,4 @@
 import * as React from 'react';
-
-import { useState } from 'react';
-
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -16,19 +13,13 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 
-// function Copyright() {
-//   return (
-//     <Typography variant="body2" color="textSecondary" align="center">
-//       {'Copyright © '}
-//       <Link color="inherit" href="https://material-ui.com/">
-//         Your Website
-//       </Link>{' '}
-//       {new Date().getFullYear()}
-//       {'.'}
-//     </Typography>
-//   );
-// }
+import {useState, useContext} from 'react'
+import { FirebaseContext } from '../Firebase'
 
+
+import { useHistory } from "react-router-dom";
+
+// CSS ----------------------------------------------------------------------------------------
 const useStyles = makeStyles((theme) => ({
 
   paper: {
@@ -50,25 +41,38 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function SignIn() {
+// Fonction SignIn ---------------------------------------------------------------------------
+export default function SignIn(props) {
   const classes = useStyles();
 
-//   const data = {
-//     id: '',
-//     password: ''
-//   }
 
-//   const[loginData, setLoginData] = useState(data);
-//   console.log(loginData);
+  const history = useHistory();
 
-//  const handleChange = e => {
-//    setLoginData({...loginData, [e.target.id]: e.target.value})
+  const firebase = useContext(FirebaseContext);
 
-//  }
+  // Variables ----------------------------------------------------------------------------
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-//  const { id, password } = loginData;
+  // Message d'erreur ---------------------------------------------------------------------
+  const [error, setError] = useState('');
 
-//  const btn = id !== '' || password !== '' ? <button disable> Connexion </button> : <button> Connexion </button>
+  // Gestion de l'envoie du formulaire ----------------------------------------------------
+  const handleSubmit = e => {
+   e.preventDefault()
+   firebase.loginUser(email, password)
+   .then(user => {
+     setEmail('');
+     setPassword('');
+     history.push("/Welcome");
+   })
+   .catch(error => {
+     setError(error)
+    setEmail('');
+    setPassword('');
+   })
+   
+  }
 
   return (
 
@@ -82,23 +86,32 @@ export default function SignIn() {
         <Typography component="h1" variant="h5">
           Entrez vos identifiants
         </Typography>
-        <form className={classes.form} noValidate>
+
+        <form className={classes.form} noValidate onSubmit={handleSubmit}>
+          
+          {/* Champs  email ------------------------------------------------------------------------ */}
           <TextField
-            // onChange={handleChange}
-            // value={id}
+            
+            onChange={ e => setEmail(e.target.value) }
+            value={email}
+            
             variant="outlined"
             margin="normal"
             required
             fullWidth
-            id="id"
-            label="Identifiant"
-            name="id"
-            autoComplete="id"
+            // id="email"
+            label="Email"
+            name="email"
+            autoComplete="off"
             autoFocus
           />
+
+          {/* Champs password ---------------------------------------------------------------------- */}
           <TextField
-            // onChange={handleChange} 
-            // value={password}
+            
+            onChange={ e => setPassword(e.target.value) }
+            value={password}
+            
             variant="outlined"
             margin="normal"
             required
@@ -106,13 +119,11 @@ export default function SignIn() {
             name="password"
             label="Password"
             type="password"
-            id="password"
-            autoComplete="current-password"
+            // id="password"
+            autoComplete="off"
           />
-          {/* <FormControlLabel
-            control={<Checkbox value="remember" color="primary" />}
-            label="Remember me"
-          /> */}
+
+          {/* Bouton Connexion ---------------------------------------------------------------------- */}
           <Button
             type="submit"
             fullWidth
@@ -121,23 +132,11 @@ export default function SignIn() {
           >
             Connexion
           </Button>
-          {/* <Grid container> */}
-            {/* <Grid item xs>
-              <Link href="#" variant="body2">
-                Forgot password?
-              </Link>
-            </Grid> */}
-            {/* <Grid item>
-              <Link href="#" variant="body2">
-                {"Don't have an account? Sign Up"}
-              </Link>
-            </Grid> */}
-          {/* </Grid> */}
         </form>
+
+        {error !== '' && <span> {error.message} </span>}
+
       </div>
-      {/* <Box mt={8}>
-        <Copyright />
-      </Box> */}
     </Container>
   );
 }
