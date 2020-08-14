@@ -16,7 +16,6 @@ import 'date-fns';
 
 import {
     MuiPickersUtilsProvider,
-    KeyboardTimePicker,
     KeyboardDatePicker,
   } from '@material-ui/pickers';
 
@@ -38,51 +37,71 @@ const Welcome = () => {
 
     const classes = useStyles();
 
-    const firebase = useContext(FirebaseContext);
+    // > Variables ----------------------------------------------------------------------------
 
-    
-    // conversion de la date timestamp 
-    
-    // année/mois/jour
+    // >> Conversion de la date (timestamp) ---------------------------------------
+
+    // >>> année/mois/jour
     const amj = new Intl.DateTimeFormat("fr-Fr", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
       });
-
-      // heure:minute:second
-      const hms = new Intl.DateTimeFormat("fr-Fr", {
+      // >>> heure:minute:second
+      const hm = new Intl.DateTimeFormat("fr-Fr", {
         hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit'
-      });
-
-    // Variables ----------------------------------------------------------------------------
-
+        minute: '2-digit'
+      });  
+     
+    // >> Variables concernant la base de donnée ---------------------------------
+    const firebase = useContext(FirebaseContext);
+    const [attr, setAttr] = React.useState([]);
     const [utilisateur, setUtilisateur] = useState('');
-    const [heure, setHeure] = useState(hms.format(Date.now()).toString());
+    const [heure, setHeure] = useState(hm.format(Date.now()).toString());
     const [poste, setPoste] = useState(0);
     const [selectedDate, setSelectedDate] = React.useState(Date.now); // Si on souhaite récupérer cette valeur (Data.now) faire 
-                                                                      //  amj.format(...).toString()
+                                                                      //  amj.format(...).toString() 
+    const [id, setId] = useState('');                                                                  
+    
 
+    // >> Variables lorsque le poste n'est pas conforme ---------------------------                                                                      
     const [btnAjouter, setBtnAjouter] = useState(false);
-
     const [labelPoste, setLabelPoste] = useState("Poste");
     const [helperTextPoste, sethelperTextPoste] = useState(null);
     const [couleur, setCouleur] = useState('black');    
 
-    const [attr, setAttr] = React.useState([]);
 
-    // Gestion de l'envoie du formulaire ----------------------------------------------------
-    const handleSubmit = e => {
-    e.preventDefault()
+    // Fonctions -----------------------------------------------------------------------------------------
+
+    // Gestion de l'envoie du formulaire --------------------------------------------
+    const onUpdate = e => {
+        // e.preventDefault()
+        const db = firebase.db;
+        console.log("utilisateur:", utilisateur,
+                    "poste:", poste,
+                    "date:", amj.format(selectedDate).toString(),
+                    "heure:", heure)
+
+        // db.collection('Attribution').add({
+        //     utilisateur: utilisateur,
+        //     poste: poste,
+        //     date: selectedDate 
+
+        // })
     }
 
-    // Récupération de la date --------------------------------------------------------------
+    // Récupération de la date ------------------------------------------------------
     const handleDateChange = (date) => {
         setSelectedDate(date);
       };
  
+    const onDelete = e => {
+        // e.preventDefault()
+        const db = firebase.db;
+        db.collection('Attribution').doc(id).delete()
+    }
+
+    // Récupération de la base de donnée --------------------------------------------  
     React.useEffect(() => {
         const fetchData = async () => {
           const db = firebase.db;
@@ -92,7 +111,7 @@ const Welcome = () => {
         fetchData();
       }, []);
 
-    // Conformatité du poste -----------------------------------------------------------------
+    // Conformité du poste ----------------------------------------------------------
     React.useEffect(() => {
         const posteDispo = () => {
             if(poste<0 || attr.some(item => item.poste == poste)){ // Si le poste est supérieur à 0 ou que c'est un nombre 
@@ -103,7 +122,7 @@ const Welcome = () => {
                 sethelperTextPoste("Valeur non conforme ou poste déjà prit")
 
             } else {
-                
+
                 setBtnAjouter(false)
                 setLabelPoste("Poste")
                 setCouleur("black")
@@ -113,8 +132,11 @@ const Welcome = () => {
         posteDispo()        
     })
 
+    // ==============================================================================================================================
+
     return(
-            <div className="row">
+
+        <div className="row" >  {/* ref={React.createRef()}> */}
 
             {/* Table ------------------------------------------------------------------------------------------------------ */}    
             <div className="column" style={{backgroundColor:'#aaa'}}>
@@ -139,7 +161,7 @@ const Welcome = () => {
                             <TableCell align="right"> {attr.utilisateur} </TableCell>
                             <TableCell align="right"> {attr.poste} </TableCell>
                             <TableCell align="right"> {amj.format(attr.date).toString()} </TableCell>
-                            <TableCell align="right"> {hms.format(attr.date).toString()} </TableCell>
+                            <TableCell align="right"> {hm.format(attr.date).toString()} </TableCell>
                             </TableRow>
                         ))}
                         </TableBody>
@@ -153,22 +175,22 @@ const Welcome = () => {
             {/* Ajout d'un utilisateur -------------------------------------------------------------------------------------- */}
             <div className="column" style={{backgroundColor:'#bbb'}}>
 
-                <h4> Ajouter un nouvel utilisateur </h4>
+                <h4> Ajout </h4>
                 
-                <form noValidate onSubmit={handleSubmit}>
+                <form noValidate onSubmit={onUpdate}>
 
                     {/* Utilisateur -------------------------------------------------------------------------- */}
                     <TextField
-                    onChange={ e => setUtilisateur(e.target.value) }
-                    value={utilisateur}
-                    variant="outlined"
-                    margin="normal"
-                    required
-                    fullWidth
-                    label="utilisateur"
-                    name="utilisateur"
-                    autoComplete="off"
-                    autoFocus
+                        onChange={ e => setUtilisateur(e.target.value) }
+                        value={utilisateur}
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        label="utilisateur"
+                        name="utilisateur"
+                        autoComplete="off"
+                        autoFocus
                     />
                     
                     {/*Date --------------------------------------------------------------------------------- */}
@@ -190,14 +212,14 @@ const Welcome = () => {
 
                     {/*Heure --------------------------------------------------------------------------------- */}
                     <TextField
-                    onChange={ e => setHeure(e.target.value) }
-                    value={heure}          
-                    variant="outlined"
-                    margin="normal"
-                    required
-                    label="Heure"
-                    autoComplete="off"
-                    autoFocus
+                        onChange={ e => setHeure(e.target.value) }
+                        value={heure}          
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        label="Heure"
+                        autoComplete="off"
+                        autoFocus
                     />
 
                     {/* numéro de poste ------------------------------------------------------------------------ */}
@@ -225,34 +247,54 @@ const Welcome = () => {
                         }}
                     />
 
-{/* <TextField
-          error
-          id="outlined-error-helper-text"
-          label="Error"
-          defaultValue="Hello World"
-          helperText="Incorrect entry."
-          variant="outlined"
-          InputProps={{ 
-            style: {
-                color: "red"
-            }
-          }}
-        /> */}
-
                     <br /> <br />
                     {/* Bouton ajouter ------------------------------------------------------------------------- */}
-                    <Button
-                    disabled={btnAjouter}
-                    type="submit"
-                    fullWidth
-                    variant="contained"
+                    <Button 
+                        disabled={btnAjouter}
+                        type="submit"
+                        fullWidth
+                        variant="contained"
                     >
-                    Ajouter
+                        Ajouter
                     </Button>
+
                 </form>
 
             </div>
+            
+            <div className="column" style={{backgroundColor:'#ccc'}}>
+                <h4> Suppresion </h4>
+
+                <form noValidate onSubmit={onDelete}>
+                {/* Id -------------------------------------------------------------------------- */}
+                <TextField
+                    onChange={ e => setId(e.target.value) }
+                    value={id}
+                    variant="outlined"
+                    margin="normal"
+                    required
+                    fullWidth
+                    label="ID"
+                    name="id"
+                    autoComplete="off"
+                    autoFocus
+                />
+
+                {/* Bouton ajouter ------------------------------------------------------------------------- */}
+                <Button 
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                >
+                    Retirer
+                </Button>
+                
+                </form>
+
             </div>
+
+
+        </div>
     )
 }
 
