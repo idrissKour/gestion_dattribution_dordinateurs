@@ -74,21 +74,21 @@ const Welcome = () => {
 
     // Fonctions -----------------------------------------------------------------------------------------
 
-    // Gestion de l'envoie du formulaire --------------------------------------------
+    // Gestion de l'envoie du formulaire pour l'ajout d'une attribution -------------------------------
     const onUpdate = e => {
-        // e.preventDefault()
+        e.preventDefault()
         const db = firebase.db;
         console.log("utilisateur:", utilisateur,
                     "poste:", poste,
                     "date:", amj.format(selectedDate).toString(),
                     "heure:", heure)
 
-        // db.collection('Attribution').add({
-        //     utilisateur: utilisateur,
-        //     poste: poste,
-        //     date: selectedDate 
+        db.collection('Attribution').add({
+            utilisateur: utilisateur,
+            poste: poste,
+            date: selectedDate 
 
-        // })
+        })
     }
 
     // Récupération de la date ------------------------------------------------------
@@ -117,7 +117,7 @@ const Welcome = () => {
             }); 
         }, []);
 
-    const handleCellClick = (e) => {
+    const selectRow = (e) => {
         const index = e.target.parentElement.getAttribute('data_key')
         //console.log(_id)
         //console.log(attr[_id].utilisateur)
@@ -173,7 +173,7 @@ const Welcome = () => {
                         </TableHead>
                         <TableBody>
                         {attr.map( (_attr, index) => (
-                            <TableRow key={_attr.id} data_key={index} onClick={handleCellClick}>
+                            <TableRow key={_attr.id} data_key={index} onClick={selectRow}>
                             <TableCell> {_attr.id} </TableCell>
                             <TableCell align="right"> {_attr.utilisateur} </TableCell>
                             <TableCell align="right"> {_attr.poste} </TableCell>

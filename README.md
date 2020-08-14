@@ -1,6 +1,6 @@
 ## Présentation du projet
 
-L'objectif est décrit dans le fichier _Description/Gestion_dordinateurs_V3.pdf_ 
+L'objectif est décrit dans le fichier _Gestion_dordinateurs_V3.pdf_ 
 
 ## Outils utilisés
 
@@ -13,8 +13,13 @@ Pour la base de donnée et la connexion sécurisé, j'utilise [Firebase](https:/
 ### Packages utilisés
 
 - Firebase
-- material-ui/core
-- material-ui/icons
+- @material-ui/core
+- @material-ui/icons
+- @material-ui/pickers
+- @date-io/date-fns@1.3.13
+- date-fns
+
+Lien de la documentation du package [@material](https://material-ui.com)
 
 ### Template 
 
@@ -22,3 +27,6 @@ Pour la page de connexion j'ai importer un modèle:
 [https://github.com/mui-org/material-ui/tree/master/docs/src/pages/getting-started/templates/sign-in](https://github.com/mui-org/material-ui/tree/master/docs/src/pages/getting-started/templates/sign-in)
 
 
+## Connexion 
+identifiant: admin@admin.fr
+mot de passe: 0123456
