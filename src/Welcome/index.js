@@ -96,20 +96,21 @@ const Welcome = () => {
       };
  
     const onDelete = e => {
-        // e.preventDefault()
+        e.preventDefault()
         const db = firebase.db;
         db.collection('Attribution').doc(id).delete()
+        setId('')
     }
 
     // Récupération de la base de donnée --------------------------------------------  
     React.useEffect(() => {
-        const fetchData = async () => {
-          const db = firebase.db;
-          const data = await db.collection("Attribution").get();
-          setAttr(data.docs.map(doc => ({ ...doc.data(), id: doc.id })));
-        };
-        fetchData();
-      }, []);
+        const db = firebase.db;
+        return db.collection("Attribution").onSnapshot((snapshot) => {
+            const attrData = []
+            snapshot.forEach(doc => attrData.push(({ ...doc.data(), id: doc.id }))) 
+            setAttr(attrData)
+            }); 
+        }, []);
 
     // Conformité du poste ----------------------------------------------------------
     React.useEffect(() => {
