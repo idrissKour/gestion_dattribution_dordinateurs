@@ -70,6 +70,7 @@ const Welcome = () => {
     const [helperTextPoste, sethelperTextPoste] = useState(null);
     const [couleur, setCouleur] = useState('black');    
 
+    const [index, setIndex] = useState(0);    
 
     // Fonctions -----------------------------------------------------------------------------------------
 
@@ -95,6 +96,10 @@ const Welcome = () => {
         setSelectedDate(date);
       };
  
+
+    // Traitement de la base de donnée -----------------------------------------------------------------------------
+
+    // Supression ---------------------------------------------------------------------
     const onDelete = e => {
         e.preventDefault()
         const db = firebase.db;
@@ -111,6 +116,17 @@ const Welcome = () => {
             setAttr(attrData)
             }); 
         }, []);
+
+    const handleCellClick = (e) => {
+        const index = e.target.parentElement.getAttribute('data_key')
+        //console.log(_id)
+        //console.log(attr[_id].utilisateur)
+        setUtilisateur(attr[index].utilisateur)
+        setPoste(attr[index].poste)
+        setHeure(hm.format(attr[index].date))
+        setSelectedDate(Date(attr[index].date))
+        console.log(new Date(attr[index].date))
+    }
 
     // Conformité du poste ----------------------------------------------------------
     React.useEffect(() => {
@@ -140,14 +156,14 @@ const Welcome = () => {
         <div className="row" >  {/* ref={React.createRef()}> */}
 
             {/* Table ------------------------------------------------------------------------------------------------------ */}    
-            <div className="column" style={{backgroundColor:'#aaa'}}>
+            <div className="column1">
 
                 <h2> Attribution </h2>
 
                 <TableContainer component={Paper}>
-                    <Table aria-label="simple table">
+                    <Table aria-label="simple table" >
                         <TableHead>
-                        <TableRow>
+                        <TableRow > 
                             <TableCell >Id</TableCell>
                             <TableCell align="right"> Utilisateur</TableCell>
                             <TableCell align="right"> Poste&nbsp;</TableCell>
@@ -156,25 +172,22 @@ const Welcome = () => {
                         </TableRow>
                         </TableHead>
                         <TableBody>
-                        {attr.map(attr => (
-                            <TableRow key={attr.id}>
-                            <TableCell > {attr.id} </TableCell>
-                            <TableCell align="right"> {attr.utilisateur} </TableCell>
-                            <TableCell align="right"> {attr.poste} </TableCell>
-                            <TableCell align="right"> {amj.format(attr.date).toString()} </TableCell>
-                            <TableCell align="right"> {hm.format(attr.date).toString()} </TableCell>
+                        {attr.map( (_attr, index) => (
+                            <TableRow key={_attr.id} data_key={index} onClick={handleCellClick}>
+                            <TableCell> {_attr.id} </TableCell>
+                            <TableCell align="right"> {_attr.utilisateur} </TableCell>
+                            <TableCell align="right"> {_attr.poste} </TableCell>
+                            <TableCell align="right"> {amj.format(_attr.date).toString()} </TableCell>
+                            <TableCell align="right"> {hm.format(_attr.date).toString()} </TableCell>
                             </TableRow>
                         ))}
                         </TableBody>
                     </Table>
                     </TableContainer>
-
-
-                <p>Some text..</p>
             </div>
 
             {/* Ajout d'un utilisateur -------------------------------------------------------------------------------------- */}
-            <div className="column" style={{backgroundColor:'#bbb'}}>
+            <div className="column">
 
                 <h4> Ajout </h4>
                 
@@ -263,7 +276,7 @@ const Welcome = () => {
 
             </div>
             
-            <div className="column" style={{backgroundColor:'#ccc'}}>
+            <div className="column" >
                 <h4> Suppresion </h4>
 
                 <form noValidate onSubmit={onDelete}>
