@@ -1,6 +1,7 @@
 ## Présentation du projet
 
 L'objectif est décrit dans le fichier _Description/Gestion_dordinateurs_V3.pdf_ 
+
 Schéma de l'application: _Description/Description.jpeg_
 
 ## Outils utilisés
