@@ -67,6 +67,10 @@ const Welcome = () => {
 
     const [btnAjouter, setBtnAjouter] = useState(false);
 
+    const [labelPoste, setLabelPoste] = useState("Poste");
+    const [helperTextPoste, sethelperTextPoste] = useState(null);
+    const [couleur, setCouleur] = useState('black');    
+
     const [attr, setAttr] = React.useState([]);
 
     // Gestion de l'envoie du formulaire ----------------------------------------------------
@@ -94,8 +98,16 @@ const Welcome = () => {
             if(poste<0 || attr.some(item => item.poste == poste)){ // Si le poste est supérieur à 0 ou que c'est un nombre 
                                                                    //  qui n'est pas déjà dans la base.
                 setBtnAjouter(true)
+                setLabelPoste("Erreur")
+                setCouleur("red")
+                sethelperTextPoste("Valeur non conforme ou poste déjà prit")
+
             } else {
+                
                 setBtnAjouter(false)
+                setLabelPoste("Poste")
+                setCouleur("black")
+                sethelperTextPoste(null)
             }
         };
         posteDispo()        
@@ -190,10 +202,11 @@ const Welcome = () => {
 
                     {/* numéro de poste ------------------------------------------------------------------------ */}
                     <TextField
+                        error={btnAjouter}
                         onChange={ e => setPoste(e.target.value) }
                         required
                         value={poste}     
-                        label="Poste"
+                        label={labelPoste}
                         type="number"
                         InputLabelProps={{
                           shrink: true,
@@ -204,9 +217,15 @@ const Welcome = () => {
                         autoComplete="off"
                         autoFocus
                         margin="normal"
+                        helperText={helperTextPoste}
+                        InputProps={{ 
+                            style: {
+                                color: couleur
+                            }
+                        }}
                     />
 
-<TextField
+{/* <TextField
           error
           id="outlined-error-helper-text"
           label="Error"
@@ -218,7 +237,7 @@ const Welcome = () => {
                 color: "red"
             }
           }}
-        />
+        /> */}
 
                     <br /> <br />
                     {/* Bouton ajouter ------------------------------------------------------------------------- */}
