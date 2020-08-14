@@ -62,7 +62,8 @@ const Welcome = () => {
     const [utilisateur, setUtilisateur] = useState('');
     const [heure, setHeure] = useState(hms.format(Date.now()).toString());
     const [poste, setPoste] = useState(0);
-    const [selectedDate, setSelectedDate] = React.useState(Date.now());
+    const [selectedDate, setSelectedDate] = React.useState(Date.now); // Si on souhaite récupérer cette valeur (Data.now) faire 
+                                                                      //  amj.format(...).toString()
 
     const [btnAjouter, setBtnAjouter] = useState(false);
 
@@ -73,6 +74,7 @@ const Welcome = () => {
     e.preventDefault()
     }
 
+    // Récupération de la date --------------------------------------------------------------
     const handleDateChange = (date) => {
         setSelectedDate(date);
       };
@@ -85,6 +87,19 @@ const Welcome = () => {
         };
         fetchData();
       }, []);
+
+    // Conformatité du poste -----------------------------------------------------------------
+    React.useEffect(() => {
+        const posteDispo = () => {
+            if(poste<0 || attr.some(item => item.poste == poste)){ // Si le poste est supérieur à 0 ou que c'est un nombre 
+                                                                   //  qui n'est pas déjà dans la base.
+                setBtnAjouter(true)
+            } else {
+                setBtnAjouter(false)
+            }
+        };
+        posteDispo()        
+    })
 
     return(
             <div className="row">
@@ -170,7 +185,6 @@ const Welcome = () => {
                     required
                     label="Heure"
                     autoComplete="off"
-                    defaultValue="00:00:00"
                     autoFocus
                     />
 
@@ -209,6 +223,7 @@ const Welcome = () => {
                     <br /> <br />
                     {/* Bouton ajouter ------------------------------------------------------------------------- */}
                     <Button
+                    disabled={btnAjouter}
                     type="submit"
                     fullWidth
                     variant="contained"
