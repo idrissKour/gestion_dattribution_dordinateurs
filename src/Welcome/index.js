@@ -11,12 +11,15 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
+import Typography from '@material-ui/core/Typography';
 
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
+
+import Alert from '@material-ui/lab/Alert';
 
 import 'date-fns';
 
@@ -30,6 +33,7 @@ import DateFnsUtils from '@date-io/date-fns';
 
 import {useState, useContext} from 'react'
 import { FirebaseContext } from '../Firebase'
+import { set } from 'date-fns';
 
 
 const useStyles = makeStyles({
@@ -74,66 +78,51 @@ const Welcome = () => {
     const [utilisateur, setUtilisateur] = useState('');
     const [debutH, setDebutH] = useState("00:00");
     const [finH, setFinH] = useState("00:00");
-    const [poste, setPoste] = useState(0);
+    const [poste, setPoste] = useState("");
     const [selectedDate, setSelectedDate] = React.useState(Date.now); // Si on souhaite récupérer cette valeur (Data.now) faire 
                                                                       //  amj.format(...).toString() 
-    const [id, setId] = useState('');                                                                  
+    const [id, setId] = useState('');     
+    
+    const [btnAM, setbtnAM] = useState('Ajouter');    
 
-    // >> Variables lorsque le poste n'est pas conforme ---------------------------                                                                      
-    const [btnAjouter, setBtnAjouter] = useState(false);
-    const [labelPoste, setLabelPoste] = useState("Poste");
-    const [helperTextPoste, sethelperTextPoste] = useState(null);
-    const [couleur, setCouleur] = useState('black');    
-
+    // Gestion de la boite de dialogue                                                                   
+    const [msgErr, setMsgErr] = useState("");
     const [open, setOpen] = React.useState(false);
     const handleClose = () => { setOpen(false) };
 
     // Récupère l'index de la ligne du tableau quand celle-ci est cliqué.
     const [selectedIndex, setSelectedIndex] = useState(null);
+    const [rowIsSelected, setRowIsSelected] = useState(false);
  
 
 
     // Fonctions -----------------------------------------------------------------------------------------
 
-    // Gestion de l'envoie du formulaire pour l'ajout d'une attribution -------------------------------
-    const onUpdate = e => {
-        e.preventDefault()
-        const db = firebase.db;
-
-        attributionPossible()
-
-        // db.collection('Attribution').add({
-        //     utilisateur: utilisateur,
-        //     poste: poste,
-        //     date: amj.format(selectedDate).toString(),
-        //     // heure: heure
-        // })
-    }
-
     const attributionPossible = () => {
 
-        const _date = amj.format(selectedDate).toString() 
-        //setSelectedIndex(3)
+        var res = null
+        var index = null 
+        const _date = amj.format(selectedDate).toString()
 
-        
-        // if(attr.map((item) => ( 
-        //     item.poste == poste && item.date == _date && 
-        //     (item.heure.split(" - ")[0] < finH && item.heure.split(" - ")[1] > debutH) )))
-        //     setId(atr)
-        //     setOpen(true)
-        //     }
-        //     console.log(item.id)
-        // ))
+        if(!rowIsSelected) {
+            index =  attr.findIndex((item) => (
+                item.poste == poste && item.date == _date && 
+                (item.heure.split(" - ")[0] < finH && item.heure.split(" - ")[1] > debutH)
+                ));
+        } else{
+            index = attr.filter((value, index) => selectedIndex !== index).findIndex((item) => (
+                item.poste == poste && item.date == _date && 
+                (item.heure.split(" - ")[0] < finH && item.heure.split(" - ")[1] > debutH)
+                ));
+        }
 
-        // attr.some(item => item.poste == poste && item.date == _date && 
-        //     (item.heure.split(" - ")[0] < finH && item.heure.split(" - ")[1] > debutH) )){
-        //         setOpen(true)
-        // }
+        return(index)
+
     }
 
     const creneauxConforme = () => { return debutH > finH ? false : true }  // Vérifie si la date de fin n'est pas postérieur à la date de début. 
     const postConforme     = () => { if(poste < 0){ setPoste(0) } }         // Vérieifie si l'admin n'a pas entré un numéro de poste négatif.
-
+    React.useEffect(() => { postConforme() })
 
     // Récupération de la date ------------------------------------------------------
     const handleDateChange = (date) => {
@@ -143,12 +132,59 @@ const Welcome = () => {
 
     // Traitement de la base de donnée -----------------------------------------------------------------------------
 
+    // Gestion de l'envoie du formulaire pour l'ajout ou la modifcation d'une attribution -------------------------------
+    const onUpdate = e => {
+        e.preventDefault()
+    
+        if(creneauxConforme() && poste > -1){
+            const db = firebase.db;
+            const index = attributionPossible()
+            if(index == -1){
+                // Ajout -----------------------------------------------
+                if(!rowIsSelected){
+                    db.collection('Attribution').add({
+                        utilisateur: utilisateur,
+                        poste: poste,
+                        date: amj.format(selectedDate).toString(),
+                        heure: debutH + " - " + finH
+                    })                    
+                // Modification -----------------------------------------    
+                } else{
+                    db.collection('Attribution').doc(id).set({...attr,
+                        utilisateur: utilisateur,
+                        poste: poste,
+                        date: amj.format(selectedDate).toString(),
+                        heure: debutH + " - " + finH
+                    })
+                    btnCancel()
+                }
+            } else{
+                setMsgErr("Le poste est déjà attribué à " + attr[index].id)
+                setSelectedIndex(index)
+                setOpen(true)
+                setRowIsSelected(false)
+            }
+        } else { 
+            setMsgErr("L'heure de début est postérieur à l'heure de fin")
+            setOpen(true)
+    
+        }
+    
+    }
+
     // Supression ---------------------------------------------------------------------
     const onDelete = e => {
         e.preventDefault()
-        const db = firebase.db;
-        db.collection('Attribution').doc(id).delete()
-        setId('')
+        if(attr.includes((item) => (item.id == id))){
+            const db = firebase.db;
+            db.collection('Attribution').doc(id).delete()
+            setId('')
+            setRowIsSelected(false)
+        } else{ 
+            setMsgErr("Cet identifiant n'est pas présent dans la base de donnée")
+            setOpen(true)
+        }
+
     }
 
     // Récupération de la base de donnée --------------------------------------------  
@@ -161,11 +197,12 @@ const Welcome = () => {
             }); 
         }, []);
 
+    // Récupération des informations à partir du tableau ----------------------------------------------------------
     const selectRow = (i) => {
 
         // const index = e.target.parentElement.getAttribute('data_key')
         const index = i
-
+        setRowIsSelected(true)
         setSelectedIndex(index)
         setUtilisateur(attr[index].utilisateur)
         setPoste(attr[index].poste)
@@ -179,33 +216,18 @@ const Welcome = () => {
         setDebutH(splitHeure[0])
         setFinH(splitHeure[1])
 
+        setbtnAM("Modifier")
+
     }
 
+    const btnCancel = () => {
+        setSelectedIndex(null)
+        setRowIsSelected(false)
+        setbtnAM("Ajouter")
+        setUtilisateur(""); setPoste(""); setId(""); setDebutH(hm.format(Date.now()).toString()); setFinH("00:00"); 
+        setSelectedDate(Date.now)
+    }
 
-    // Conformité du poste ----------------------------------------------------------
-    React.useEffect(() => {
-
-        postConforme()
-
-    //     const posteDispo = () => {
-
-    //         if(poste<0 || attr.some(item => item.poste == poste)){ // Si le poste est supérieur à 0 ou que c'est un nombre 
-    //                                                                //  qui n'est pas déjà dans la base.
-    //             setBtnAjouter(true)
-    //             setLabelPoste("Erreur")
-    //             setCouleur("red")
-    //             sethelperTextPoste("Valeur non conforme ou poste déjà prit")
-
-    //         } else {
-
-    //             setBtnAjouter(false)
-    //             setLabelPoste("Poste")
-    //             setCouleur("black")
-    //             sethelperTextPoste(null)
-    //         }
-    //     };
-    //     posteDispo()        
-    })
 
     // ==============================================================================================================================
 
@@ -214,6 +236,8 @@ const Welcome = () => {
     return(
 
         <div className="row" >
+{/* 
+            <Alert severity="error" hidden style={{"justifyContent": 'center'}} > {msgErr} </Alert> */}
 
             {/* Table ------------------------------------------------------------------------------------------------------ */}    
             <div className="column1">
@@ -256,7 +280,7 @@ const Welcome = () => {
 
                 <h4> Ajout </h4>
                 
-                <form noValidate onSubmit={onUpdate}>
+                <form noValidate>
 
                     {/* Utilisateur -------------------------------------------------------------------------- */}
                     <TextField
@@ -325,11 +349,11 @@ const Welcome = () => {
 
                     {/* numéro de poste ------------------------------------------------------------------------ */}
                     <TextField
-                        error={btnAjouter}
+                        // error={btnAjouter}
                         onChange={ e => setPoste(e.target.value) }
                         required
                         value={poste}     
-                        label={labelPoste}
+                        label="Poste"
                         type="number"
                         InputLabelProps={{
                           shrink: true,
@@ -339,12 +363,12 @@ const Welcome = () => {
                         autoComplete="off"
                         autoFocus
                         margin="normal"
-                        helperText={helperTextPoste}
-                        InputProps={{ 
-                            style: {
-                                color: couleur
-                            }
-                        }}
+                        // helperText={helperTextPoste}
+                        // InputProps={{ 
+                        //     style: {
+                        //         color: couleur
+                        //     }
+                        // }}
                     />
 
                     <br /> <br />
@@ -352,26 +376,23 @@ const Welcome = () => {
                     <div>
 
                     {/* Bouton ajouter ------------------------------------------------------------------------- */}
-                    <Button 
-                        id="btnAM"
-                        disabled={btnAjouter}
+                    <Button onClick={onUpdate}
                         type="submit"
                         fullWidth
                         variant="contained"
                     >
-                        Ajouter
+                        {btnAM}
                     </Button>
 
-                    <Button 
-                        id="btnAM"
-                        disabled={btnAjouter}
-                        type="submit"
+                    <br /> <br />
+                    <Button onClick={btnCancel}
+                        disabled = {!rowIsSelected}
                         fullWidth
                         variant="contained"
                     >
-                        Modifier
+                    Annuler
                     </Button>
-
+                    
                     </div>
 
                 </form>
@@ -417,21 +438,10 @@ const Welcome = () => {
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
         >
-            <DialogTitle id="alert-dialog-title">{"Use Google's location service?"}</DialogTitle>
+            <DialogTitle id="alert-dialog-title">{"Erreur"}</DialogTitle>
             <DialogContent>
-              <DialogContentText id="alert-dialog-description">
-                Let Google help apps determine location. This means sending anonymous location data to
-                Google, even when no apps are running.
-                </DialogContentText>
+              <DialogContentText id="alert-dialog-description"> {msgErr} </DialogContentText>
             </DialogContent>
-            <DialogActions>
-                <Button onClick={handleClose} color="primary">
-                    Les poste est déjà prit par {id}
-                </Button>
-                <Button onClick={handleClose} color="primary" autoFocus>
-                    Agree
-                </Button>
-            </DialogActions>
       </Dialog>
 
         </div>
