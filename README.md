@@ -1,6 +1,8 @@
 ## Présentation du projet
 
-L'objectif est décrit dans le fichier _Gestion_dordinateurs_V3.pdf_ 
+L'objectif est décrit dans le fichier _Description/Gestion_dordinateurs_V3.pdf_ 
+
+Schéma de l'application: _Description/Description.jpeg_
 
 ## Outils utilisés
 
@@ -26,7 +28,14 @@ Lien de la documentation du package [@material](https://material-ui.com)
 Pour la page de connexion j'ai importer un modèle: 
 [https://github.com/mui-org/material-ui/tree/master/docs/src/pages/getting-started/templates/sign-in](https://github.com/mui-org/material-ui/tree/master/docs/src/pages/getting-started/templates/sign-in)
 
+## Lancement de l'application en local
+```
+$ pwd
+gestion_dattribution_dordinateurs
+$ npm start
+```
 
 ## Connexion 
 identifiant: admin@admin.fr
+
 mot de passe: 0123456
