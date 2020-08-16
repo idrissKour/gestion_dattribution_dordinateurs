@@ -1,7 +1,7 @@
 import React from 'react'
 import './.css';
 
-import { Button, TextField } from '@material-ui/core';
+import { Button, TextField, ListItemSecondaryAction } from '@material-ui/core';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
@@ -12,7 +12,14 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+
 import 'date-fns';
+
 
 import {
     MuiPickersUtilsProvider,
@@ -29,6 +36,14 @@ const useStyles = makeStyles({
     table: {
       minWidth: 550,
     },
+
+    tableRow: {
+        "&$selected, &$selected:hover": {
+          backgroundColor: "#E8E8E8"
+        }
+      },
+    hover: {},
+    selected: {}
     
   });
 
@@ -57,12 +72,12 @@ const Welcome = () => {
     const firebase = useContext(FirebaseContext);
     const [attr, setAttr] = React.useState([]);
     const [utilisateur, setUtilisateur] = useState('');
-    const [heure, setHeure] = useState(hm.format(Date.now()).toString());
+    const [debutH, setDebutH] = useState("00:00");
+    const [finH, setFinH] = useState("00:00");
     const [poste, setPoste] = useState(0);
     const [selectedDate, setSelectedDate] = React.useState(Date.now); // Si on souhaite récupérer cette valeur (Data.now) faire 
                                                                       //  amj.format(...).toString() 
     const [id, setId] = useState('');                                                                  
-    
 
     // >> Variables lorsque le poste n'est pas conforme ---------------------------                                                                      
     const [btnAjouter, setBtnAjouter] = useState(false);
@@ -70,7 +85,13 @@ const Welcome = () => {
     const [helperTextPoste, sethelperTextPoste] = useState(null);
     const [couleur, setCouleur] = useState('black');    
 
-    const [index, setIndex] = useState(0);    
+    const [open, setOpen] = React.useState(false);
+    const handleClose = () => { setOpen(false) };
+
+    // Récupère l'index de la ligne du tableau quand celle-ci est cliqué.
+    const [selectedIndex, setSelectedIndex] = useState(null);
+ 
+
 
     // Fonctions -----------------------------------------------------------------------------------------
 
@@ -78,18 +99,41 @@ const Welcome = () => {
     const onUpdate = e => {
         e.preventDefault()
         const db = firebase.db;
-        console.log("utilisateur:", utilisateur,
-                    "poste:", poste,
-                    "date:", amj.format(selectedDate).toString(),
-                    "heure:", heure)
 
-        db.collection('Attribution').add({
-            utilisateur: utilisateur,
-            poste: poste,
-            date: selectedDate 
+        attributionPossible()
 
-        })
+        // db.collection('Attribution').add({
+        //     utilisateur: utilisateur,
+        //     poste: poste,
+        //     date: amj.format(selectedDate).toString(),
+        //     // heure: heure
+        // })
     }
+
+    const attributionPossible = () => {
+
+        const _date = amj.format(selectedDate).toString() 
+        //setSelectedIndex(3)
+
+        
+        // if(attr.map((item) => ( 
+        //     item.poste == poste && item.date == _date && 
+        //     (item.heure.split(" - ")[0] < finH && item.heure.split(" - ")[1] > debutH) )))
+        //     setId(atr)
+        //     setOpen(true)
+        //     }
+        //     console.log(item.id)
+        // ))
+
+        // attr.some(item => item.poste == poste && item.date == _date && 
+        //     (item.heure.split(" - ")[0] < finH && item.heure.split(" - ")[1] > debutH) )){
+        //         setOpen(true)
+        // }
+    }
+
+    const creneauxConforme = () => { return debutH > finH ? false : true }  // Vérifie si la date de fin n'est pas postérieur à la date de début. 
+    const postConforme     = () => { if(poste < 0){ setPoste(0) } }         // Vérieifie si l'admin n'a pas entré un numéro de poste négatif.
+
 
     // Récupération de la date ------------------------------------------------------
     const handleDateChange = (date) => {
@@ -117,43 +161,59 @@ const Welcome = () => {
             }); 
         }, []);
 
-    const selectRow = (e) => {
-        const index = e.target.parentElement.getAttribute('data_key')
-        //console.log(_id)
-        //console.log(attr[_id].utilisateur)
+    const selectRow = (i) => {
+
+        // const index = e.target.parentElement.getAttribute('data_key')
+        const index = i
+
+        setSelectedIndex(index)
         setUtilisateur(attr[index].utilisateur)
         setPoste(attr[index].poste)
-        setHeure(hm.format(attr[index].date))
-        setSelectedDate(Date(attr[index].date))
-        console.log(new Date(attr[index].date))
+        setId(attr[index].id)
+
+        const sd = attr[index].date.split("/")                // On doit transformé la format de la date qui est en fr en us
+        const usDate = sd[1] + "/" + sd[0] + "/" + sd[2]
+        setSelectedDate(Date.parse(usDate));                  // Puis on transformé cette date en format timestamps
+
+        const splitHeure = attr[index].heure.split(" - ")    
+        setDebutH(splitHeure[0])
+        setFinH(splitHeure[1])
+
     }
+
 
     // Conformité du poste ----------------------------------------------------------
     React.useEffect(() => {
-        const posteDispo = () => {
-            if(poste<0 || attr.some(item => item.poste == poste)){ // Si le poste est supérieur à 0 ou que c'est un nombre 
-                                                                   //  qui n'est pas déjà dans la base.
-                setBtnAjouter(true)
-                setLabelPoste("Erreur")
-                setCouleur("red")
-                sethelperTextPoste("Valeur non conforme ou poste déjà prit")
 
-            } else {
+        postConforme()
 
-                setBtnAjouter(false)
-                setLabelPoste("Poste")
-                setCouleur("black")
-                sethelperTextPoste(null)
-            }
-        };
-        posteDispo()        
+    //     const posteDispo = () => {
+
+    //         if(poste<0 || attr.some(item => item.poste == poste)){ // Si le poste est supérieur à 0 ou que c'est un nombre 
+    //                                                                //  qui n'est pas déjà dans la base.
+    //             setBtnAjouter(true)
+    //             setLabelPoste("Erreur")
+    //             setCouleur("red")
+    //             sethelperTextPoste("Valeur non conforme ou poste déjà prit")
+
+    //         } else {
+
+    //             setBtnAjouter(false)
+    //             setLabelPoste("Poste")
+    //             setCouleur("black")
+    //             sethelperTextPoste(null)
+    //         }
+    //     };
+    //     posteDispo()        
     })
 
     // ==============================================================================================================================
 
+  
+
     return(
 
-        <div className="row" >  {/* ref={React.createRef()}> */}
+        <div className="row" >
 
             {/* Table ------------------------------------------------------------------------------------------------------ */}    
             <div className="column1">
@@ -173,12 +233,17 @@ const Welcome = () => {
                         </TableHead>
                         <TableBody>
                         {attr.map( (_attr, index) => (
-                            <TableRow key={_attr.id} data_key={index} onClick={selectRow}>
-                            <TableCell> {_attr.id} </TableCell>
-                            <TableCell align="right"> {_attr.utilisateur} </TableCell>
+                            <TableRow
+                            hover
+                            key={index} data_key={index} onClick={ () => {selectRow(index)}}
+                            selected={selectedIndex === index}
+                            classes={{ hover: classes.hover, selected: classes.selected }}
+                            className={classes.tableRow}>
+                            <TableCell> {_attr.id} </TableCell>                              
+                            <TableCell align="right"> {_attr.utilisateur} </TableCell>      
                             <TableCell align="right"> {_attr.poste} </TableCell>
-                            <TableCell align="right"> {amj.format(_attr.date).toString()} </TableCell>
-                            <TableCell align="right"> {hm.format(_attr.date).toString()} </TableCell>
+                            <TableCell align="right"> {_attr.date} </TableCell>
+                            <TableCell align="right"> {_attr.heure} </TableCell>
                             </TableRow>
                         ))}
                         </TableBody>
@@ -225,16 +290,38 @@ const Welcome = () => {
                     </MuiPickersUtilsProvider>
 
                     {/*Heure --------------------------------------------------------------------------------- */}
+
+                    <div id = "time">
+
+                        <p id="creneaux" > Crénaux </p>
+
+                    {/* Début ------------------------------------------------------------- */}
                     <TextField
-                        onChange={ e => setHeure(e.target.value) }
-                        value={heure}          
-                        variant="outlined"
-                        margin="normal"
+                        id="tfTime"
+                        onChange={ e => setDebutH(e.target.value) }
+                        value={debutH}
                         required
-                        label="Heure"
-                        autoComplete="off"
-                        autoFocus
-                    />
+                        label="Début"
+                        type="time"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+
+                    {/* Fin ----------------------------------------------------------------- */}
+                    <TextField
+                        id="tfTime"
+                        onChange={ e => setFinH(e.target.value) }
+                        required
+                        value={finH}
+                        label="Fin"
+                        type="time"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+
+                    </div>
 
                     {/* numéro de poste ------------------------------------------------------------------------ */}
                     <TextField
@@ -247,7 +334,6 @@ const Welcome = () => {
                         InputLabelProps={{
                           shrink: true,
                         }}
-                        InputProps={{ inputProps: { min: 0} }}
                         fullWidth
                         variant="outlined"
                         autoComplete="off"
@@ -262,8 +348,12 @@ const Welcome = () => {
                     />
 
                     <br /> <br />
+
+                    <div>
+
                     {/* Bouton ajouter ------------------------------------------------------------------------- */}
                     <Button 
+                        id="btnAM"
                         disabled={btnAjouter}
                         type="submit"
                         fullWidth
@@ -272,9 +362,23 @@ const Welcome = () => {
                         Ajouter
                     </Button>
 
+                    <Button 
+                        id="btnAM"
+                        disabled={btnAjouter}
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                    >
+                        Modifier
+                    </Button>
+
+                    </div>
+
                 </form>
 
             </div>
+
+            {/* Suppression d'une attribution ---------------------------------------------------------------- */}
             
             <div className="column" >
                 <h4> Suppresion </h4>
@@ -293,8 +397,8 @@ const Welcome = () => {
                     autoComplete="off"
                     autoFocus
                 />
-
-                {/* Bouton ajouter ------------------------------------------------------------------------- */}
+                
+                {/* Bouton Suppression --------------------------------------------------------- */}
                 <Button 
                     type="submit"
                     fullWidth
@@ -302,11 +406,33 @@ const Welcome = () => {
                 >
                     Retirer
                 </Button>
-                
+
                 </form>
 
             </div>
 
+        <Dialog
+            open={open}
+            onClose={handleClose}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+        >
+            <DialogTitle id="alert-dialog-title">{"Use Google's location service?"}</DialogTitle>
+            <DialogContent>
+              <DialogContentText id="alert-dialog-description">
+                Let Google help apps determine location. This means sending anonymous location data to
+                Google, even when no apps are running.
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleClose} color="primary">
+                    Les poste est déjà prit par {id}
+                </Button>
+                <Button onClick={handleClose} color="primary" autoFocus>
+                    Agree
+                </Button>
+            </DialogActions>
+      </Dialog>
 
         </div>
     )
