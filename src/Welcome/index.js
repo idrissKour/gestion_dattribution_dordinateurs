@@ -1,25 +1,13 @@
 import React from 'react'
 import './.css';
 
-import { Button, TextField, ListItemSecondaryAction } from '@material-ui/core';
-
-import { makeStyles } from '@material-ui/core/styles';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
-
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-
-import Alert from '@material-ui/lab/Alert';
+import { Button, TextField, 
+    ListItemSecondaryAction,
+    makeStyles, 
+    Table, TableRow, TableBody, TableCell, TableContainer, TableHead,
+    Paper,
+    Dialog, DialogTitle, DialogContent, DialogContentText,
+ } from '@material-ui/core';
 
 import 'date-fns';
 
@@ -33,7 +21,6 @@ import DateFnsUtils from '@date-io/date-fns';
 
 import {useState, useContext} from 'react'
 import { FirebaseContext } from '../Firebase'
-import { set } from 'date-fns';
 
 
 const useStyles = makeStyles({
@@ -43,7 +30,7 @@ const useStyles = makeStyles({
 
     tableRow: {
         "&$selected, &$selected:hover": {
-          backgroundColor: "#E8E8E8"
+          backgroundColor: "#E8E8E8" 
         }
       },
     hover: {},
@@ -138,7 +125,7 @@ const Welcome = () => {
     
         if(creneauxConforme() && poste > -1){
             const db = firebase.db;
-            const index = attributionPossible()
+            var index = attributionPossible()
             if(index == -1){
                 // Ajout -----------------------------------------------
                 if(!rowIsSelected){
@@ -159,6 +146,8 @@ const Welcome = () => {
                     btnCancel()
                 }
             } else{
+                console.log(index, selectedIndex)
+                index = index >= selectedIndex ? index+1 : index 
                 setMsgErr("Le poste est déjà attribué à " + attr[index].id)
                 setSelectedIndex(index)
                 setOpen(true)
@@ -175,7 +164,7 @@ const Welcome = () => {
     // Supression ---------------------------------------------------------------------
     const onDelete = e => {
         e.preventDefault()
-        if(attr.includes((item) => (item.id == id))){
+        if(attr.some((item) => (item.id == id))){
             const db = firebase.db;
             db.collection('Attribution').doc(id).delete()
             setId('')
@@ -236,8 +225,6 @@ const Welcome = () => {
     return(
 
         <div className="row" >
-{/* 
-            <Alert severity="error" hidden style={{"justifyContent": 'center'}} > {msgErr} </Alert> */}
 
             {/* Table ------------------------------------------------------------------------------------------------------ */}    
             <div className="column1">
@@ -248,6 +235,7 @@ const Welcome = () => {
                     <Table aria-label="simple table" >
                         <TableHead>
                         <TableRow > 
+                            <TableCell > </TableCell>
                             <TableCell >Id</TableCell>
                             <TableCell align="right"> Utilisateur</TableCell>
                             <TableCell align="right"> Poste&nbsp;</TableCell>
@@ -263,6 +251,7 @@ const Welcome = () => {
                             selected={selectedIndex === index}
                             classes={{ hover: classes.hover, selected: classes.selected }}
                             className={classes.tableRow}>
+                            <TableCell> {index} </TableCell> 
                             <TableCell> {_attr.id} </TableCell>                              
                             <TableCell align="right"> {_attr.utilisateur} </TableCell>      
                             <TableCell align="right"> {_attr.poste} </TableCell>
@@ -349,7 +338,6 @@ const Welcome = () => {
 
                     {/* numéro de poste ------------------------------------------------------------------------ */}
                     <TextField
-                        // error={btnAjouter}
                         onChange={ e => setPoste(e.target.value) }
                         required
                         value={poste}     
@@ -363,12 +351,6 @@ const Welcome = () => {
                         autoComplete="off"
                         autoFocus
                         margin="normal"
-                        // helperText={helperTextPoste}
-                        // InputProps={{ 
-                        //     style: {
-                        //         color: couleur
-                        //     }
-                        // }}
                     />
 
                     <br /> <br />
